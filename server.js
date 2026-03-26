@@ -36,16 +36,23 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // --- API ROUTES ---
 
+const bcrypt = require('bcryptjs');
+
 // Admin Auth
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    if (username === 'admin' && password === process.env.ADMIN_PASSWORD) {
+
+    // Default admin from ENV (for first time)
+    if (username === 'admin' && (password === process.env.ADMIN_PASSWORD || await bcrypt.compare(password, await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)))) {
         return res.json({ success: true, role: 'admin' });
     }
-    // Check Employee/User in DB (Hashing skipped for simplicity, use bcrypt in real app)
-    const user = await User.findOne({ username, password, role: 'admin' });
-    if (user) return res.json({ success: true, role: 'admin', user });
-    res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    // Check Users in DB
+    const user = await User.findOne({ username, role: 'admin' });
+    if (user && await bcrypt.compare(password, user.password)) {
+        return res.json({ success: true, role: 'admin', user });
+    }
+    res.status(401).json({ success: false, message: 'Login yoki parol xato!' });
 });
 
 // Get Employees sorted by rating

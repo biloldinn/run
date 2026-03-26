@@ -73,6 +73,15 @@ bot.on('message', async (msg) => {
         bot.sendMessage(chatId, profileInfo, { parse_mode: 'Markdown', reply_markup: getMainMenu(user.role) });
     }
 
+    else if (text === "📞 Bog'lanish") {
+        const contactInfo = `📞 **Biz bilan bog'lanish**\n\nSavollar yoki takliflar bo'lsa, @admin bilan bog'laning yoki +99890XXXXXXX raqamiga qo'ng'iroq qiling.`;
+        bot.sendMessage(chatId, contactInfo, { parse_mode: 'Markdown' });
+    }
+
+    else if (text === "🔄 Yangilash") {
+        bot.sendMessage(chatId, "🔄 Ma'lumotlar yangilandi.", { reply_markup: getMainMenu(user.role) });
+    }
+
     else if (text === "📊 Mening statistikam" && user.role === 'employee') {
         const stats = `📊 **Sizning unumdorligingiz**\n\n✅ Bajarilgan zakazlar: ${user.totalOrders}\n⭐ O'rtacha baho: ${user.averageRating}\n🏆 Reytingdagi o'rningizni Admin panelda ko'rishingiz mumkin.`;
         bot.sendMessage(chatId, stats, { parse_mode: 'Markdown' });
