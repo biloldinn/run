@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Turon Zakas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-bg: #2c3e50;
+            --primary: #3498db;
+        }
+
+        body {
+            background: #f8f9fa;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            color: white;
+            padding-top: 20px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            padding: 15px 25px;
+            display: block;
+            text-decoration: none;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 4px solid var(--primary);
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            border-left: 5px solid var(--primary);
+        }
+
+        .rating-star {
+            color: #f1c40f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h4 class="text-center mb-4">Turon Admin</h4>
+        <a href="#" class="nav-link active"><i class="fas fa-home me-2"></i> Dashboard</a>
+        <a href="#" class="nav-link" onclick="loadEmployees()"><i class="fas fa-users me-2"></i> Hodimlar</a>
+        <a href="#" class="nav-link" onclick="loadOrders()"><i class="fas fa-shopping-cart me-2"></i> Buyurtmalar</a>
+        <a href="#" class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>
+            Chiqish</a>
+    </div>
+
+    <div class="content">
+        <div id="dashboardSection">
+            <h2 class="mb-4">Asosiy Dashboard</h2>
+            <div class="row" id="statsGrid">
+                <div class="col-md-3">
+                    <div class="card p-3 stat-card">
+                        <h6>Jami Zakazlar</h6>
+                        <h3 id="statTotalOrders">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4 mt-4">
+                <h4><i class="fas fa-clock me-2"></i> Kutilayotgan Buyurtmalar</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mijoz</th>
+                                <th>Yo'nalish</th>
+                                <th>Vaqt</th>
+                                <th>Amal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingOrders"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee List Modal / Section -->
+        <div id="employeeSection" style="display:none;">
+            <h2 class="mb-4">Hodimlar va Reyting</h2>
+            <div id="employeeList" class="row"></div>
+        </div>
+    </div>
+
+    <!-- Assign Order Modal -->
+    <div class="modal fade" id="assignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Zakazni biriktirish</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="currentOrderId">
+                    <div class="mb-3">
+                        <label>Hodim tanlang (Reyting bo'yicha)</label>
+                        <select id="employeeSelect" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Narx (so'm)</label>
+                        <input type="number" id="orderPrice" class="form-control" placeholder="20000">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="confirmAssign()">Biriktirish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        if (!localStorage.getItem('admin_token')) window.location.href = 'index.html';
+
+        async function loadEmployees() {
+            const res = await fetch('/api/employees');
+            const employees = await res.json();
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '';
+            employees.forEach(e => {
+                select.innerHTML += `<option value="${e._id}">${e.firstName} ${e.lastName} (⭐ ${e.averageRating})</option>`;
+            });
+        }
+
+        async function loadOrders() {
+            const res = await fetch('/api/orders/pending');
+            const orders = await res.json();
+            const tbody = document.getElementById('pendingOrders');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Yangi buyurtmalar yo\'q</td></tr>';
+                return;
+            }
+
+            orders.forEach(o => {
+                const date = new Date(o.timestamps.created).toLocaleTimeString();
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${o.client.firstName} ${o.client.lastName || ''}</td>
+                        <td>${o.details.from} ➡️ ${o.details.to}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="openAssignModal('${o._id}')">
+                                <i class="fas fa-user-plus"></i> Biriktirish
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('statTotalOrders').textContent = orders.length;
+        }
+
+        let currentOrderId = null;
+        function openAssignModal(orderId) {
+            currentOrderId = orderId;
+            new bootstrap.Modal(document.getElementById('assignModal')).show();
+        }
+
+        async function confirmAssign() {
+            const employeeId = document.getElementById('employeeSelect').value;
+            const price = document.getElementById('orderPrice').value;
+
+            if (!price) return alert('Narxni kiriting!');
+
+            const res = await fetch(`/api/orders/${currentOrderId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employeeId, price })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide();
+                loadOrders();
+                alert('Buyurtma biriktirildi!');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            window.location.href = 'index.html';
+        }
+
+        // Socket Refresh
+        const socket = io();
+        socket.on('order_updated', () => loadOrders());
+
+        // Initialize
+        loadOrders();
+        loadEmployees();
+    </script>
+</body>
+
+</html>
