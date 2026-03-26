@@ -127,6 +127,23 @@ app.get('/api/analytics/orders', async (req, res) => {
 // Health check / Keep-alive ping
 app.get('/api/ping', (req, res) => res.json({ status: 'alive', time: new Date() }));
 
+// Get Analytics Summary
+app.get('/api/analytics/summary', async (req, res) => {
+    const totalOrders = await Order.countDocuments();
+    const completedOrders = await Order.countDocuments({ status: 'completed' });
+    const employees = await User.find({ role: 'employee' });
+    const avgRating = employees.length > 0 ? (employees.reduce((a, b) => a + b.averageRating, 0) / employees.length).toFixed(1) : 0;
+
+    // Simple revenue calculation (sum of all completed orders' prices)
+    const revenueData = await Order.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: null, total: { $sum: "$details.price" } } }
+    ]);
+    const revenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+    res.json({ totalOrders, completedOrders, avgRating, revenue, activeEmployees: employees.length });
+});
+
 // Root redirect
 app.get('/', (req, res) => res.redirect('/web'));
 

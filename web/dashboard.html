@@ -471,6 +471,14 @@
 
         async function loadData() {
             try {
+                // Load Analytics Summary
+                const summaryRes = await fetch('/api/analytics/summary');
+                const summary = await summaryRes.json();
+                document.getElementById('statTotalOrders').textContent = summary.totalOrders;
+                document.getElementById('statActiveEmployees').textContent = summary.activeEmployees;
+                document.getElementById('statAvgRating').textContent = summary.avgRating;
+                document.getElementById('statRevenue').textContent = (summary.revenue / 1000).toFixed(1) + 'K';
+
                 const orderRes = await fetch('/api/orders/pending');
                 const orders = await orderRes.json();
                 const tbody = document.getElementById('pendingOrdersTable');
