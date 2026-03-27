@@ -1,5 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from .config import WEBAPP_URL
+from config import WEBAPP_URL
 
 def get_main_keyboard(is_admin=False):
     buttons = [

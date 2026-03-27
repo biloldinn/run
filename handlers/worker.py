@@ -8,7 +8,7 @@ from database import (
     assign_order_to_worker, update_order_status, update_worker_stats,
     get_worker_today_stats, get_worker_history, get_order_by_id
 )
-from ..keyboards import get_worker_orders_keyboard
+from keyboards import get_worker_orders_keyboard
 from config import ADMIN_IDS
 
 router = Router()

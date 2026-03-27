@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 
 from database import get_all_services, get_service_by_id
-from ..keyboards import get_services_keyboard
+from keyboards import get_services_keyboard
 
 router = Router()
 

@@ -11,7 +11,7 @@ from database import (
     update_order_payment_status, get_orders_by_user,
     get_order_by_id
 )
-from ..keyboards import get_payment_keyboard, get_orders_keyboard, get_order_detail_keyboard
+from keyboards import get_payment_keyboard, get_orders_keyboard, get_order_detail_keyboard
 from config import ADMIN_IDS, CARD_NUMBER, CARD_OWNER
 
 router = Router()

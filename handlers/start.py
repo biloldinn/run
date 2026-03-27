@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from database import get_or_create_user, get_user_by_telegram_id, update_user_phone
-from ..keyboards import get_main_keyboard, get_worker_keyboard
+from keyboards import get_main_keyboard, get_worker_keyboard
 from config import ADMIN_IDS
 
 router = Router()
